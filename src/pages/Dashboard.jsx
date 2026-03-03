@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useTrip } from '../context/TripContext';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Send, Plane } from 'lucide-react';
