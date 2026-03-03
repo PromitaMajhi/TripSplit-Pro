@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useTrip } from '../context/TripContext';
 
-const SettlementSummary = ({ trip, expenses, currency }) => {
+const SettlementSummary = ({ trip, expenses, currency, onSendWhatsApp }) => {
     const { data } = useTrip();
     const currencySymbol = currency === 'INR' ? '₹' : (currency === 'USD' ? '$' : '€');
 
@@ -31,11 +31,21 @@ const SettlementSummary = ({ trip, expenses, currency }) => {
                         )}
                         <div>
                             <strong className="block text-sm">{t.name}</strong>
-                            <p className="text-xs text-secondary">Paid: {currencySymbol}{t.paid.toFixed(0)}</p>
+                            <p className="text-xs text-secondary">Spent: {currencySymbol}{t.paid.toFixed(0)}</p>
                         </div>
                     </div>
-                    <div className={`text-sm font-bold ${t.balance >= 0 ? 'text-success' : 'text-danger'}`}>
-                        {t.balance >= 0 ? '+' : ''}{currencySymbol}{t.balance.toFixed(0)}
+                    <div className="flex-center gap-md">
+                        <div className={`text-sm font-bold ${t.balance >= 0 ? 'text-success' : 'text-danger'}`}>
+                            {t.balance >= 0 ? '+' : ''}{currencySymbol}{t.balance.toFixed(0)}
+                        </div>
+                        <button
+                            className="btn-icon glass"
+                            style={{ width: 32, height: 32, color: '#25D366' }}
+                            onClick={() => onSendWhatsApp(t)}
+                            title="Send WhatsApp Summary"
+                        >
+                            <Send size={14} />
+                        </button>
                     </div>
                 </div>
             ))}

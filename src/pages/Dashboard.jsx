@@ -67,6 +67,25 @@ const Dashboard = () => {
         }));
     };
 
+    const handleSendWhatsApp = (memberBalance) => {
+        const template = data.templates[0].body;
+        const currencySymbol = data.settings.currency === 'INR' ? '₹' : (data.settings.currency === 'USD' ? '$' : '€');
+
+        let message = template
+            .replace(/{trip_name}/g, trip.name)
+            .replace(/{trip_location}/g, trip.location)
+            .replace(/{member_name}/g, memberBalance.name)
+            .replace(/{total_currency}/g, currencySymbol)
+            .replace(/{total_amount}/g, stats.total.toLocaleString())
+            .replace(/{share_amount}/g, memberBalance.share.toFixed(0))
+            .replace(/{status_label}/g, memberBalance.balance >= 0 ? 'To Receive' : 'To Pay')
+            .replace(/{balance}/g, Math.abs(memberBalance.balance).toFixed(0));
+
+        const encodedMsg = encodeURIComponent(message);
+        const url = `https://wa.me/${memberBalance.whatsapp}?text=${encodedMsg}`;
+        window.open(url, '_blank');
+    };
+
     if (!trip) {
         return (
             <motion.div
@@ -147,7 +166,12 @@ const Dashboard = () => {
                             <Send size={14} /> Send WhatsApp
                         </button>
                     </div>
-                    <SettlementSummary trip={trip} expenses={expenses} currency={data.settings.currency} />
+                    <SettlementSummary
+                        trip={trip}
+                        expenses={expenses}
+                        currency={data.settings.currency}
+                        onSendWhatsApp={handleSendWhatsApp}
+                    />
                 </div>
             </div>
 
