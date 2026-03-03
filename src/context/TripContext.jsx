@@ -17,7 +17,11 @@ export const TripProvider = ({ children }) => {
                 timezone: 'Asia/Kolkata'
             },
             templates: [
-                { id: '1', name: 'Standard Summary', body: 'Trip: {trip_name}\nMember: {member_name}\nTotal: {total}\nYour Share: {amount}' }
+                {
+                    id: '1',
+                    name: 'Professional Summary',
+                    body: '🌴 *TripSplit Pro Summary*\n--------------------------\n📍 *Trip:* {trip_name}\n🗺️ *Location:* {trip_location}\n👤 *Member:* {member_name}\n\n📊 *Final Breakdown:* \n🔸 Total Trip Expense: {total_currency}{total_amount}\n🔸 Your Share: {total_currency}{share_amount}\n\n💰 *Status:* {status_label} *{total_currency}{balance}*\n\n--------------------------\n_Sent via TripSplit Pro ⚛️_'
+                }
             ]
         };
     });
