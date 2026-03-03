@@ -763,7 +763,13 @@ const UI = {
         const members = store.getMembers();
 
         if (members.length === 0) {
-            container.innerHTML = '<div class="card glass text-center py-xl w-full">No members found.</div>';
+            container.innerHTML = `
+                <div class="col-span-full flex-center flex-col text-center py-xl animate-in" style="min-height: 40vh">
+                    <div class="glass p-lg mb-lg flex-center" style="border-radius: 50%; width: 80px; height: 80px; font-size: 2rem">👥</div>
+                    <h3 class="h3 mb-sm">No Members Yet</h3>
+                    <p class="text-secondary text-sm max-w-xs mb-lg">Add your travel buddies to start splitting expenses with them.</p>
+                </div>
+            `;
             if (demoContainer) demoContainer.classList.remove('hidden');
             return;
         }
@@ -928,6 +934,87 @@ const UI = {
         if (tzSelect) tzSelect.value = settings.timezone || 'Asia/Kolkata';
 
         this.renderTemplatesManagement();
+    },
+
+    renderDashboard() {
+        const trip = store.getCurrentTrip();
+        if (!trip) {
+            document.getElementById('app-content').innerHTML = `
+                <div class="flex-center flex-col text-center py-xl animate-in" style="min-height: 60vh">
+                    <div class="glass p-xl mb-xl flex-center" style="border-radius: 50%; width: 120px; height: 120px; font-size: 3rem">✈️</div>
+                    <h2 class="h2 mb-md">Welcome to TripSplit Pro!</h2>
+                    <p class="text-secondary max-w-sm mb-xl">Your adventure starts here. Create a trip to track expenses, split costs with friends, and see where your money goes.</p>
+                    <button class="btn-primary py-lg px-xl" onclick="UI.showView('view-trip-creation')">✨ Create Your First Trip</button>
+                    <div class="mt-xl pt-lg border-top w-full max-w-sm">
+                        <button class="btn-outline w-full text-xs" onclick="UI.handleLoadDemoMembers()">📦 Or load demo data to explore</button>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        // Restore original content if it was overwritten
+        const dashboardHtml = `
+            <div id="view-dashboard" class="view animate-in">
+                <div class="flex-col gap-xl">
+                    <div class="grid-2 gap-xl">
+                        <div class="card stat-card float gradient-1 p-xl animate-scale-up">
+                            <span class="text-sm uppercase opacity-80">Total Trip Expense</span>
+                            <h3 class="h1 mt-sm" id="total-trip-cost">₹0</h3>
+                            <div class="mt-md text-xs" id="dashboard-trip-location">---</div>
+                        </div>
+                        <div class="card stat-card float glass p-xl animate-scale-up">
+                            <div class="flex-between">
+                                <div>
+                                    <span class="text-sm uppercase text-secondary">Per Person Share</span>
+                                    <h3 class="h2 mt-sm" id="per-person-share">₹0</h3>
+                                    <span class="text-xs text-muted mt-xs block">Equal division active</span>
+                                </div>
+                                <div class="h3 gradient-text" id="member-count">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card glass p-xl">
+                        <div class="flex-between mb-xl">
+                            <h3 class="h4">Daily Spending Trend</h3>
+                            <span class="badge text-xs" id="chart-month">---</span>
+                        </div>
+                        <div class="chart-container" id="spending-chart"></div>
+                    </div>
+                    <div class="grid-2 gap-xl items-start">
+                        <div class="expense-records">
+                            <div class="flex-between mb-lg">
+                                <h3 class="h4">Expense Records</h3>
+                                <button class="btn-secondary text-xs py-xs px-md" onclick="UI.showExpenseModal()">Add New</button>
+                            </div>
+                            <div id="expense-list" class="flex-col gap-md"></div>
+                        </div>
+                        <div class="settlement-summary">
+                            <div class="flex-between mb-lg">
+                                <h3 class="h4">Settlement Summary</h3>
+                                <button class="btn-outline text-xs py-xs px-md" onclick="UI.handleWhatsAppSummary()">Send WhatsApp</button>
+                            </div>
+                            <div id="member-breakdown" class="flex-col gap-sm"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.getElementById('app-content').innerHTML = dashboardHtml;
+
+        const expenses = store.getTripExpenses(trip.id);
+        const currency = store.data.settings.currency === 'INR' ? '₹' : (store.data.settings.currency === 'USD' ? '$' : '€');
+        const total = expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
+
+        document.getElementById('total-trip-cost').textContent = `${currency}${total.toLocaleString()}`;
+        document.getElementById('dashboard-trip-location').textContent = trip.location;
+        document.getElementById('member-count').textContent = trip.memberIds.length;
+        document.getElementById('per-person-share').textContent = `${currency}${trip.memberIds.length ? (total / trip.memberIds.length).toLocaleString() : 0}`;
+        document.getElementById('chart-month').textContent = new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+
+        this.renderSpendingChart(expenses, currency);
+        this.renderExpenseList(expenses, currency);
+        this.renderMemberBreakdown(trip, expenses, currency);
     },
 
     handleResetTrip() {
