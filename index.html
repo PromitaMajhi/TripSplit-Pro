@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="system">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TripSplit Pro - Expense Splitting for Travel Groups</title>
+    <meta name="description"
+        content="Professional expense splitting app for travel groups. Simple, responsive, and works offline.">
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body class="bg-surface text-main">
+    <!-- Main App Container -->
+    <div id="app" class="app-container">
+        <!-- Navigation Bar -->
+        <header class="navbar glass">
+            <div class="container flex-between">
+                <div class="logo">
+                    <span class="logo-icon">✈️</span>
+                    <span class="logo-text">TripSplit <span class="text-primary">Pro</span></span>
+                </div>
+                <div class="nav-actions">
+                    <div class="dropdown" id="about-dropdown">
+                        <button class="btn-icon" id="about-trigger" aria-label="About App">
+                            <span class="icon">ℹ️</span>
+                        </button>
+                        <div class="dropdown-content glass hidden" id="about-menu">
+                            <div class="dropdown-header">
+                                <h3>TripSplit Pro</h3>
+                                <span class="version">v2.2</span>
+                            </div>
+                            <div class="changelog">
+                                <h4>Changelog</h4>
+                                <ul>
+                                    <li>✨ New modern UI using Glassmorphism</li>
+                                    <li>📱 Mobile-first responsive design</li>
+                                    <li>💬 WhatsApp integration for summaries</li>
+                                    <li>🔐 Offline-first via LocalStorage</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn-icon" id="theme-toggle" aria-label="Toggle Theme">
+                        <span class="icon">🌙</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area (Views) -->
+        <main class="content-wrapper container">
+            <!-- Loading State -->
+            <section id="view-loading" class="view flex-center">
+                <div class="loader"></div>
+            </section>
+
+            <!-- Trip Creation View -->
+            <section id="view-trip-creation" class="view hidden">
+                <div class="card glass animate-in">
+                    <h1 class="h2">Plan Your Next Adventure</h1>
+                    <p class="text-secondary">Create a trip and add your travel buddies.</p>
+                    <form id="trip-form" class="mt-xl">
+                        <div class="form-group">
+                            <label for="trip-name">Trip Name</label>
+                            <input type="text" id="trip-name" placeholder="e.g. Goa Trip 2024" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="trip-location">Location</label>
+                            <input type="text" id="trip-location" placeholder="e.g. Goa, India" required>
+                        </div>
+                        <div class="flex-row gap-md">
+                            <div class="form-group w-full">
+                                <label for="trip-start">Start Date</label>
+                                <input type="date" id="trip-start" required>
+                            </div>
+                            <div class="form-group w-full">
+                                <label for="trip-end">End Date</label>
+                                <input type="date" id="trip-end" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Travel Members</label>
+                            <div id="member-selection-list" class="member-chips-container">
+                                <!-- Members will be populated here -->
+                            </div>
+                            <button type="button" class="btn-text" id="add-member-trigger">+ Add New Member</button>
+                        </div>
+                        <button type="submit" class="btn-primary w-full mt-lg">Create Trip</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Dashboard View -->
+            <section id="view-dashboard" class="view hidden">
+                <div class="dashboard-header animate-in">
+                    <div>
+                        <h1 class="h2" id="dashboard-trip-name">Trip Dashboard</h1>
+                        <p class="text-secondary" id="dashboard-trip-location">Location</p>
+                    </div>
+                    <button class="btn-secondary" id="add-expense-trigger">+ Add Expense</button>
+                </div>
+
+                <div class="stats-grid mt-lg">
+                    <div class="card glass stat-card animate-in-delay-1">
+                        <span class="stat-label">Total Cost</span>
+                        <span class="stat-value" id="total-trip-cost">₹0</span>
+                    </div>
+                    <div class="card glass stat-card animate-in-delay-2">
+                        <span class="stat-label">Settled</span>
+                        <span class="stat-value" id="total-settled">₹0</span>
+                    </div>
+                    <div class="card glass stat-card animate-in-delay-3">
+                        <span class="stat-label">Members</span>
+                        <span class="stat-value" id="member-count">0</span>
+                    </div>
+                </div>
+
+                <div class="dashboard-content mt-xl">
+                    <div class="expense-list-section">
+                        <h3 class="section-title">Expenses</h3>
+                        <div id="expense-list" class="expense-list mt-md">
+                            <!-- Expenses grouped by date will be here -->
+                        </div>
+                    </div>
+                    <div class="summary-section">
+                        <h3 class="section-title">Member Breakdown</h3>
+                        <div id="member-breakdown" class="member-breakdown-list mt-md">
+                            <!-- Member breakdown cards will be here -->
+                        </div>
+                        <button class="btn-outline w-full mt-lg" id="send-whatsapp-summary">
+                            <span>Send Summary via WhatsApp</span>
+                            <span class="icon">💬</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Members Management View -->
+            <section id="view-members" class="view hidden">
+                <div class="flex-between animate-in">
+                    <h1 class="h2">Members Management</h1>
+                    <button class="btn-primary" id="open-member-form">Add Member</button>
+                </div>
+                <div id="members-list" class="members-grid mt-lg">
+                    <!-- Members will be here -->
+                </div>
+            </section>
+
+            <!-- Settings View -->
+            <section id="view-settings" class="view hidden">
+                <div class="card glass animate-in">
+                    <h1 class="h2">Settings</h1>
+                    <div class="settings-list mt-xl">
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <strong>Theme</strong>
+                                <p class="text-secondary">Customize your experience</p>
+                            </div>
+                            <select id="settings-theme">
+                                <option value="light">Light</option>
+                                <option value="dark">Dark</option>
+                                <option value="system">System</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <strong>Currency</strong>
+                                <p class="text-secondary">Default currency for splits</p>
+                            </div>
+                            <select id="settings-currency">
+                                <option value="INR">INR (₹)</option>
+                                <option value="USD">USD ($)</option>
+                                <option value="EUR">EUR (€)</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <strong>Timezone</strong>
+                                <p class="text-secondary">Display timestamps correctly</p>
+                            </div>
+                            <select id="settings-timezone">
+                                <option value="Asia/Kolkata">Asia/Kolkata</option>
+                                <option value="UTC">UTC</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card glass mt-lg animate-in-delay-1">
+                    <h3 class="h3">WhatsApp Message Templates</h3>
+                    <div id="templates-list" class="templates-list mt-md">
+                        <!-- Templates will be listed here -->
+                    </div>
+                    <button class="btn-outline w-full mt-lg" id="add-template-trigger">+ Create New Template</button>
+                </div>
+            </section>
+        </main>
+
+        <!-- Bottom Navigation (Mobile) -->
+        <nav class="bottom-nav glass mobile-only">
+            <button class="nav-item active" data-view-target="dashboard">
+                <span class="icon">📊</span>
+                <span class="label">Dashboard</span>
+            </button>
+            <button class="nav-item" data-view-target="members">
+                <span class="icon">👥</span>
+                <span class="label">Members</span>
+            </button>
+            <button class="nav-item" data-view-target="settings">
+                <span class="icon">⚙️</span>
+                <span class="label">Settings</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-container" class="modal-overlay hidden">
+        <div class="modal-card glass animate-slide-up">
+            <div class="modal-header">
+                <h3 id="modal-title">Modal Title</h3>
+                <button class="btn-icon" id="modal-close">&times;</button>
+            </div>
+            <div id="modal-body" class="modal-content">
+                <!-- Modal content injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
