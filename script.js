@@ -139,12 +139,17 @@ const UI = {
     },
 
     setupEventListeners() {
-        // Navigation
+        // Navigation (Sidebar & Pills)
         document.querySelectorAll('[data-view-target]').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const target = e.currentTarget.dataset.viewTarget;
                 this.showView(`view-${target}`);
                 this.updateActiveNav(e.currentTarget);
+                window.location.hash = target;
+
+                // Set View Title
+                const titleMap = { dashboard: 'Dashboard', members: 'Trip Members', settings: 'App Settings' };
+                document.getElementById('view-title').textContent = titleMap[target] || 'TripSplit Pro';
             });
         });
 
@@ -154,19 +159,22 @@ const UI = {
             const next = current === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', next);
             store.updateSettings({ theme: next });
-            this.updateThemeIcon(next);
         });
 
         // About Dropdown
-        const aboutTrigger = document.getElementById('about-trigger');
-        const aboutMenu = document.getElementById('about-menu');
-        aboutTrigger.addEventListener('click', (e) => {
-            e.stopPropagation();
-            aboutMenu.classList.toggle('hidden');
-        });
+        const setupAbout = (triggerId) => {
+            const trigger = document.getElementById(triggerId);
+            if (!trigger) return;
+            trigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                document.getElementById('about-menu').classList.toggle('hidden');
+            });
+        };
+        setupAbout('about-trigger');
+        setupAbout('about-trigger-sidebar');
 
         document.addEventListener('click', () => {
-            aboutMenu.classList.add('hidden');
+            document.getElementById('about-menu').classList.add('hidden');
         });
 
         // Modal Close
@@ -184,19 +192,15 @@ const UI = {
             });
         }
 
-        // Add Member Trigger in Trip Creation
-        document.getElementById('add-member-trigger').addEventListener('click', () => {
-            this.showMemberModal();
-        });
+        // Add Member/Expense Triggers
+        document.getElementById('add-member-trigger').addEventListener('click', () => this.showMemberModal());
+        document.getElementById('add-member-management').addEventListener('click', () => this.showMemberModal());
 
-        // Dashboard Actions
-        document.getElementById('add-expense-trigger').addEventListener('click', () => {
-            this.showExpenseModal();
-        });
+        const addExpenseHandler = () => this.showExpenseModal();
+        document.getElementById('add-expense-trigger').addEventListener('click', addExpenseHandler);
+        document.getElementById('add-expense-trigger-sidebar').addEventListener('click', addExpenseHandler);
 
-        document.getElementById('send-whatsapp-summary').addEventListener('click', () => {
-            this.handleWhatsAppSummary();
-        });
+        document.getElementById('send-whatsapp-summary').addEventListener('click', () => this.handleWhatsAppSummary());
 
         // Settings Listeners
         document.getElementById('settings-theme').addEventListener('change', (e) => {
@@ -209,27 +213,28 @@ const UI = {
             this.renderDashboard();
         });
 
-        document.getElementById('add-template-trigger').addEventListener('click', () => {
-            this.showTemplateModal();
-        });
+        document.getElementById('add-template-trigger').addEventListener('click', () => this.showTemplateModal());
     },
 
     route() {
         const trip = store.getCurrentTrip();
-        const hash = window.location.hash;
+        const hash = window.location.hash.replace('#', '');
+        const validViews = ['dashboard', 'members', 'settings'];
+        const activeView = validViews.includes(hash) ? hash : 'dashboard';
 
         if (!trip) {
             this.showView('view-trip-creation');
             this.renderMemberSelection();
-        } else if (hash === '#members') {
-            this.showView('view-members');
-            this.renderMembersManagement();
-        } else if (hash === '#settings') {
-            this.showView('view-settings');
-            this.renderSettings();
         } else {
-            this.showView('view-dashboard');
-            this.renderDashboard();
+            this.showView(`view-${activeView}`);
+            const navBtn = document.querySelector(`[data-view-target="${activeView}"]`);
+            if (navBtn) this.updateActiveNav(navBtn);
+
+            if (activeView === 'dashboard') this.renderDashboard();
+            if (activeView === 'members') this.renderMembersManagement();
+            if (activeView === 'settings') this.renderSettings();
+
+            document.getElementById('view-title').textContent = activeView.charAt(0).toUpperCase() + activeView.slice(1);
         }
     },
 
@@ -243,7 +248,7 @@ const UI = {
     },
 
     updateActiveNav(activeBtn) {
-        document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.nav-pill').forEach(btn => btn.classList.remove('active'));
         activeBtn.classList.add('active');
     },
 
@@ -254,7 +259,6 @@ const UI = {
             activeTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         }
         document.documentElement.setAttribute('data-theme', activeTheme);
-        this.updateThemeIcon(activeTheme);
     },
 
     updateThemeIcon(theme) {
@@ -279,16 +283,20 @@ const UI = {
         const members = store.getMembers();
 
         if (members.length === 0) {
-            container.innerHTML = '<p class="text-secondary">No members added yet.</p>';
+            container.innerHTML = `
+                <div class="col-span-full p-lg glass text-center" style="border-radius: var(--radius-md)">
+                    <p class="text-secondary text-sm">No members added yet. Create some to start splitting!</p>
+                </div>
+            `;
             return;
         }
 
         container.innerHTML = members.map(m => `
-            <div class="member-chip" data-id="${m.id}">
+            <div class="member-chip">
                 <input type="checkbox" id="m-${m.id}" value="${m.id}" name="members" checked>
                 <label for="m-${m.id}">
-                    ${m.photo ? `<img src="${m.photo}" class="chip-avatar">` : '👤'}
-                    <span>${m.name}</span>
+                    ${m.photo ? `<img src="${m.photo}" class="chip-avatar">` : '<div class="chip-avatar flex-center bg-surface">👤</div>'}
+                    <span class="text-xs font-bold">${m.name}</span>
                 </label>
             </div>
         `).join('');
@@ -296,21 +304,21 @@ const UI = {
 
     showMemberModal() {
         const html = `
-            <form id="member-form">
+            <form id="member-form" class="flex-col gap-lg">
                 <div class="form-group">
                     <label>Member Name</label>
-                    <input type="text" id="m-name" required placeholder="Name">
+                    <input type="text" id="m-name" required placeholder="e.g. Alex Graham">
                 </div>
                 <div class="form-group">
                     <label>WhatsApp Number</label>
                     <input type="tel" id="m-phone" required placeholder="e.g. 919876543210">
                 </div>
                 <div class="form-group">
-                    <label>Photo</label>
-                    <input type="file" id="m-photo" accept="image/*">
-                    <div id="photo-preview" class="mt-sm"></div>
+                    <label>Profile Photo</label>
+                    <input type="file" id="m-photo" accept="image/*" class="text-xs">
+                    <div id="photo-preview" class="mt-sm flex-center"></div>
                 </div>
-                <button type="submit" class="btn-primary w-full mt-md">Save Member</button>
+                <button type="submit" class="btn-primary w-full py-md mt-md">✨ Save Member</button>
             </form>
         `;
         this.showModal('Add New Member', html);
@@ -367,23 +375,59 @@ const UI = {
         const start = trip.startDate ? new Date(trip.startDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }) : '';
         const end = trip.endDate ? new Date(trip.endDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
 
-        document.getElementById('dashboard-trip-name').textContent = trip.name;
-        document.getElementById('dashboard-trip-location').textContent = `${trip.location} • ${start} - ${end}`;
-
+        // Update Stat Cards
         const expenses = store.getTripExpenses(trip.id);
         const total = expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
+        const share = trip.memberIds.length > 0 ? total / trip.memberIds.length : 0;
 
         document.getElementById('total-trip-cost').textContent = `${currency}${total.toLocaleString()}`;
+        document.getElementById('per-person-share').textContent = `${currency}${share.toLocaleString()}`;
         document.getElementById('member-count').textContent = trip.memberIds.length;
+        document.getElementById('dashboard-trip-location').textContent = `${trip.location} • ${start} - ${end}`;
 
+        // Month for chart
+        const currentMonth = new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+        document.getElementById('chart-month').textContent = currentMonth;
+
+        this.renderSpendingChart(expenses, currency);
         this.renderExpenseList(expenses, currency);
         this.renderMemberBreakdown(trip, expenses, currency);
+    },
+
+    renderSpendingChart(expenses, currency) {
+        const container = document.getElementById('spending-chart');
+        if (expenses.length === 0) {
+            container.innerHTML = '<div class="flex-center w-full py-xl text-muted">No data to display</div>';
+            return;
+        }
+
+        // Group expenses by date (last 7 days or all trip days)
+        const dailyData = {};
+        expenses.forEach(exp => {
+            const dateStr = new Date(exp.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+            dailyData[dateStr] = (dailyData[dateStr] || 0) + parseFloat(exp.amount);
+        });
+
+        const dates = Object.keys(dailyData).sort((a, b) => new Date(a) - new Date(b)).slice(-7);
+        const maxAmount = Math.max(...Object.values(dailyData), 100);
+
+        container.innerHTML = dates.map(date => {
+            const amount = dailyData[date];
+            const height = (amount / maxAmount) * 100;
+            return `
+                <div class="chart-bar-wrapper">
+                    <div class="chart-bar" style="height: ${height}%"></div>
+                    <div class="chart-tooltip">${currency}${amount.toLocaleString()}</div>
+                    <div class="chart-bar-label">${date}</div>
+                </div>
+            `;
+        }).join('');
     },
 
     renderExpenseList(expenses, currency) {
         const container = document.getElementById('expense-list');
         if (expenses.length === 0) {
-            container.innerHTML = '<div class="card glass text-center py-xl">No expenses yet. Start by adding one!</div>';
+            container.innerHTML = '<div class="card glass text-center py-xl">No expenses yet.</div>';
             return;
         }
 
@@ -397,20 +441,20 @@ const UI = {
 
         container.innerHTML = Object.entries(grouped).map(([date, items]) => `
             <div class="expense-group mb-lg">
-                <div class="expense-date text-secondary mb-sm" style="font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">${date}</div>
+                <div class="text-xs text-muted mb-sm uppercase font-bold tracking-wider">${date}</div>
                 <div class="flex-col gap-sm">
                     ${items.map(exp => {
             const payer = store.getMembers().find(m => m.id === exp.paidBy);
             return `
-                            <div class="expense-item glass animate-in p-md flex-between" style="border-radius: var(--radius-md); cursor: pointer;" onclick="UI.showExpenseDetailModal('${exp.id}')">
-                                <div class="exp-info">
-                                    <strong style="display: block">${exp.title}</strong>
-                                    <span class="text-secondary" style="font-size: 0.75rem">Paid by ${payer ? payer.name : 'Unknown'}</span>
-                                </div>
+                            <div class="card glass animate-in p-md flex-between" style="cursor: pointer;" onclick="UI.showExpenseDetailModal('${exp.id}')">
                                 <div class="flex-center gap-md">
-                                    <div class="exp-amount" style="font-weight: 700; color: var(--primary)">${currency}${parseFloat(exp.amount).toLocaleString()}</div>
-                                    <span class="icon text-muted" style="font-size: 0.8rem">👁️</span>
+                                    <div class="avatar-sm flex-center">💸</div>
+                                    <div>
+                                        <strong class="block text-sm">${exp.title}</strong>
+                                        <span class="text-xs text-secondary">Paid by ${payer ? payer.name : 'Unknown'}</span>
+                                    </div>
                                 </div>
+                                <div class="text-sm font-bold gradient-text">${currency}${parseFloat(exp.amount).toLocaleString()}</div>
                             </div>
                         `;
         }).join('')}
@@ -435,15 +479,15 @@ const UI = {
         });
 
         container.innerHTML = totals.map(t => `
-            <div class="member-card glass mb-md p-md flex-between" style="border-radius: var(--radius-md)">
-                <div class="m-meta flex-center gap-md">
-                    ${t.photo ? `<img src="${t.photo}" class="avatar-sm" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">` : '<div class="avatar-sm flex-center bg-glass" style="width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--glass-border)">👤</div>'}
+            <div class="card glass mb-sm p-md flex-between">
+                <div class="flex-center gap-md">
+                    ${t.photo ? `<img src="${t.photo}" class="avatar-sm">` : '<div class="avatar-sm flex-center">👤</div>'}
                     <div>
-                        <strong style="font-size: 0.875rem">${t.name}</strong>
-                        <p class="text-secondary" style="font-size: 0.7rem">Paid: ${currency}${t.paid.toFixed(0)}</p>
+                        <strong class="block text-sm">${t.name}</strong>
+                        <p class="text-xs text-secondary">Paid: ${currency}${t.paid.toFixed(0)}</p>
                     </div>
                 </div>
-                <div class="m-balance ${t.balance >= 0 ? 'text-success' : 'text-danger'}" style="font-weight: 700; font-size: 0.875rem">
+                <div class="text-sm font-bold ${t.balance >= 0 ? 'text-success' : 'text-danger'}">
                     ${t.balance >= 0 ? '+' : ''}${currency}${t.balance.toFixed(0)}
                 </div>
             </div>
@@ -761,7 +805,35 @@ const UI = {
         document.getElementById('settings-theme').value = theme;
         document.getElementById('settings-currency').value = currency;
         document.getElementById('settings-timezone').value = timezone;
+
+        // Add Reset Button to Settings
+        const settingsCard = document.querySelector('#view-settings .card');
+        if (settingsCard && !document.getElementById('reset-trip-btn')) {
+            const resetDiv = document.createElement('div');
+            resetDiv.className = 'mt-xl pt-lg border-top';
+            resetDiv.innerHTML = `
+                <h4 class="text-sm mb-sm text-danger">Danger Zone</h4>
+                <p class="text-xs text-secondary mb-md">Once you reset the current trip, all expenses will be deleted permanently.</p>
+                <button id="reset-trip-btn" class="btn-outline text-danger border-danger w-full">Delete Current Trip data</button>
+            `;
+            settingsCard.appendChild(resetDiv);
+
+            document.getElementById('reset-trip-btn').addEventListener('click', () => this.handleResetTrip());
+        }
+
         this.renderTemplatesManagement();
+    },
+
+    handleResetTrip() {
+        if (confirm('Are you absolutely sure? This will delete the current trip and all its expenses.')) {
+            const trip = store.getCurrentTrip();
+            if (trip) {
+                store.deleteTrip(trip.id);
+                this.showToast('Trip deleted successfully');
+                window.location.hash = '';
+                this.route();
+            }
+        }
     },
 
     showToast(message, type = 'success') {
