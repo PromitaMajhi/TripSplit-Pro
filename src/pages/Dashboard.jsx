@@ -69,12 +69,36 @@ const Dashboard = () => {
 
     if (!trip) {
         return (
-            <div className="flex-center flex-col text-center py-xl animate-in" style={{ minHeight: '60vh' }}>
-                <div className="glass p-xl mb-xl flex-center" style={{ borderRadius: '50%', width: 120, height: 120, fontSize: '3rem' }}>✈️</div>
-                <h2 className="h2 mb-md">Welcome to TripSplit Pro!</h2>
-                <p className="text-secondary max-w-sm mb-xl">Your adventure starts here. Create a trip to track expenses, split costs with friends, and see where your money goes.</p>
-                <button className="btn-primary py-lg px-xl" onClick={() => navigate('/create-trip')}>✨ Create Your First Trip</button>
-            </div>
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex-center flex-col text-center py-xl animate-in"
+                style={{ minHeight: '70vh' }}
+            >
+                <div className="relative mb-xl">
+                    <motion.div
+                        animate={{ y: [0, -15, 0], rotate: [0, 5, -5, 0] }}
+                        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                        className="glass p-xl flex-center shadow-bloom"
+                        style={{ borderRadius: '50%', width: 140, height: 140, fontSize: '4rem', background: 'rgba(255,255,255,0.03)' }}
+                    >
+                        ✈️
+                    </motion.div>
+                    <div className="absolute inset-0 bg-primary blur-3xl opacity-20 -z-10"></div>
+                </div>
+                <h2 className="h1 mb-md font-bold text-gradient">Your next adventure awaits</h2>
+                <p className="text-secondary max-w-sm mb-xl text-lg leading-relaxed">
+                    TripSplit Pro handles the math so you can focus on the memories. Start by creating your first trip.
+                </p>
+                <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="btn-primary py-lg px-xl text-lg shadow-glow"
+                    onClick={() => navigate('/create-trip')}
+                >
+                    ✨ Create Your First Trip
+                </motion.button>
+            </motion.div>
         );
     }
 

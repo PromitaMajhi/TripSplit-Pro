@@ -7,13 +7,19 @@
     --glass-border: rgba(255, 255, 255, 0.08);
 
     --primary: #f43f5e;
-    /* Rose 500 */
+    --primary-glow: rgba(244, 63, 94, 0.4);
     --secondary: #fb923c;
-    /* Orange 400 */
-    --gradient-1: linear-gradient(135deg, #f43f5e 0%, #fb923c 100%);
-    --gradient-fade: linear-gradient(135deg, rgba(244, 63, 94, 0.1) 0%, rgba(251, 146, 60, 0.1) 100%);
+    --secondary-glow: rgba(251, 146, 60, 0.4);
 
-    --text-main: #f8fafc;
+    --gradient-1: linear-gradient(135deg, #f43f5e 0%, #fb923c 100%);
+    --gradient-mesh: radial-gradient(at 0% 0%, rgba(244, 63, 94, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(251, 146, 60, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(244, 114, 182, 0.1) 0px, transparent 50%),
+        radial-gradient(at 0% 100%, rgba(251, 146, 60, 0.1) 0px, transparent 50%);
+
+    --glass-bg: rgba(15, 23, 42, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-inner-glow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
     --text-secondary: #94a3b8;
     --text-muted: #64748b;
 
@@ -121,11 +127,7 @@ body {
     font-family: 'Inter', -apple-system, system-ui, sans-serif;
     font-size: var(--fs-base);
     background-color: var(--bg-surface);
-    background-image:
-        radial-gradient(at 0% 0%, rgba(244, 63, 94, 0.15) 0px, transparent 50%),
-        radial-gradient(at 100% 0%, rgba(251, 146, 60, 0.15) 0px, transparent 50%),
-        radial-gradient(at 100% 100%, rgba(244, 63, 94, 0.1) 0px, transparent 50%),
-        radial-gradient(at 0% 100%, rgba(251, 146, 60, 0.1) 0px, transparent 50%);
+    background-image: var(--gradient-mesh);
     background-attachment: fixed;
     color: var(--text-main);
     line-height: 1.6;
@@ -157,8 +159,9 @@ h1,
 h2,
 h3,
 h4 {
+    font-family: 'Outfit', sans-serif;
     font-weight: 700;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.02em;
 }
 
 .text-sm {
@@ -297,8 +300,10 @@ h4 {
 
 .glass {
     background: var(--glass-bg);
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-inner-glow), var(--shadow-lg);
 }
 
 .stat-card {
@@ -306,12 +311,41 @@ h4 {
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    z-index: 1;
+}
+
+.stat-card-glow {
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.stat-card:hover .stat-card-glow {
+    opacity: 1;
 }
 
 .stat-card.gradient-1 {
     background: var(--gradient-1);
     border: none;
     color: white;
+    box-shadow: 0 10px 30px var(--primary-glow);
+}
+
+.stat-card.gradient-1::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.1) 45%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.1) 55%, transparent 60%);
+    background-size: 200% 100%;
+    animation: shine 3s infinite linear;
+    pointer-events: none;
 }
 
 /* Charts */
@@ -856,8 +890,51 @@ textarea:focus {
     background: rgba(244, 63, 94, 0.1) !important;
 }
 
+.text-gradient {
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: inline-block;
+}
+
+.shadow-bloom {
+    box-shadow: 0 0 50px var(--primary-glow);
+}
+
+.shadow-glow {
+    box-shadow: 0 4px 15px var(--primary-glow);
+}
+
+.shadow-glow:hover {
+    box-shadow: 0 8px 25px var(--primary-glow);
+}
+
 .relative {
     position: relative;
+}
+
+.absolute {
+    position: absolute;
+}
+
+.inset-0 {
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
+.-z-10 {
+    z-index: -10;
+}
+
+.blur-3xl {
+    filter: blur(64px);
+}
+
+.opacity-20 {
+    opacity: 0.2;
 }
 
 .w-full {

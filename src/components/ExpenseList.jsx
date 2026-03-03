@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTrip } from '../context/TripContext';
+import { motion } from 'framer-motion';
 
 const getCategoryIcon = (title) => {
     const t = title.toLowerCase();
@@ -17,7 +18,13 @@ const ExpenseList = ({ expenses, currency }) => {
 
     if (expenses.length === 0) {
         return (
-            <div className="card glass text-center py-xl text-secondary">No expenses yet.</div>
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="card glass text-center py-xl text-secondary"
+            >
+                No expenses yet.
+            </motion.div>
         );
     }
 
@@ -31,27 +38,38 @@ const ExpenseList = ({ expenses, currency }) => {
 
     return (
         <div className="flex-col gap-lg">
-            {Object.entries(grouped).map(([date, items]) => (
-                <div key={date} className="expense-group">
-                    <div className="text-xs text-muted mb-sm uppercase font-bold tracking-wider">{date}</div>
+            {Object.entries(grouped).map(([date, items], groupIdx) => (
+                <motion.div
+                    key={date}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: groupIdx * 0.1 }}
+                    className="expense-group"
+                >
+                    <div className="text-xs text-muted mb-sm uppercase font-bold tracking-widest">{date}</div>
                     <div className="flex-col gap-sm">
-                        {items.map(exp => {
+                        {items.map((exp, idx) => {
                             const payer = data.members.find(m => m.id === exp.paidBy);
                             return (
-                                <div key={exp.id} className="card glass animate-in p-md flex-between" style={{ cursor: 'pointer' }}>
+                                <motion.div
+                                    key={exp.id}
+                                    whileHover={{ x: 5, backgroundColor: "rgba(255, 255, 255, 0.03)" }}
+                                    className="card glass p-md flex-between"
+                                    style={{ cursor: 'pointer' }}
+                                >
                                     <div className="flex-center gap-md">
-                                        <div className="avatar-sm flex-center">{getCategoryIcon(exp.title)}</div>
+                                        <div className="avatar-sm flex-center glass" style={{ fontSize: '1.2rem' }}>{getCategoryIcon(exp.title)}</div>
                                         <div>
                                             <strong className="block text-sm">{exp.title}</strong>
                                             <span className="text-xs text-secondary">Paid by {payer ? payer.name : 'Unknown'}</span>
                                         </div>
                                     </div>
                                     <div className="text-sm font-bold gradient-text">{currencySymbol}{parseFloat(exp.amount).toLocaleString()}</div>
-                                </div>
+                                </motion.div>
                             );
                         })}
                     </div>
-                </div>
+                </motion.div>
             ))}
         </div>
     );
