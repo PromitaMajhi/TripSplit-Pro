@@ -11,8 +11,16 @@ class Store {
 
     load() {
         const saved = localStorage.getItem(this.storageKey);
-        return saved ? JSON.parse(saved) : {
-            members: [],
+        const defaultData = {
+            members: [
+                { id: 'm1', name: 'Shuvo', whatsapp: '8801765245872', photo: '' },
+                { id: 'm2', name: 'Promita', whatsapp: '8801912790430', photo: '' },
+                { id: 'm3', name: 'Monami', whatsapp: '917044528716', photo: '' },
+                { id: 'm4', name: 'Setu', whatsapp: '919933493538', photo: '' },
+                { id: 'm5', name: 'Arpita', whatsapp: '8801923701861', photo: '' },
+                { id: 'm6', name: 'Dipanjon', whatsapp: '918016370668', photo: '' },
+                { id: 'm7', name: 'Srijan', whatsapp: '8801643116647', photo: '' }
+            ],
             trips: [],
             expenses: [],
             settings: {
@@ -25,6 +33,15 @@ class Store {
             ],
             currentTripId: null
         };
+
+        if (!saved) return defaultData;
+
+        const data = JSON.parse(saved);
+        // If the user has data but no members, inject defaults
+        if (data.members.length === 0) {
+            data.members = defaultData.members;
+        }
+        return data;
     }
 
     save() {
@@ -150,15 +167,27 @@ const UI = {
                 // Set View Title
                 const titleMap = { dashboard: 'Dashboard', members: 'Trip Members', settings: 'App Settings' };
                 document.getElementById('view-title').textContent = titleMap[target] || 'TripSplit Pro';
+
+                // Close sidebar on mobile after navigation
+                this.closeSidebar();
             });
         });
+
+        // Sidebar Toggle (Mobile)
+        document.getElementById('sidebar-toggle').addEventListener('click', () => this.toggleSidebar());
+        document.getElementById('sidebar-overlay').addEventListener('click', () => this.closeSidebar());
 
         // Theme Toggle
         document.getElementById('theme-toggle').addEventListener('click', () => {
             const current = document.documentElement.getAttribute('data-theme');
             const next = current === 'dark' ? 'light' : 'dark';
-            document.documentElement.setAttribute('data-theme', next);
+            this.setTheme(next);
             store.updateSettings({ theme: next });
+        });
+
+        // System Theme Change Observer
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+            if (store.data.settings.theme === 'system') this.applyTheme();
         });
 
         // About Dropdown
@@ -241,15 +270,37 @@ const UI = {
     showView(viewId) {
         this.views.forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.classList.add('hidden');
+            if (el) {
+                el.classList.add('hidden');
+                el.classList.remove('animate-in');
+            }
         });
         const target = document.getElementById(viewId);
-        if (target) target.classList.remove('hidden');
+        if (target) {
+            target.classList.remove('hidden');
+            // Force reflow for animation
+            void target.offsetWidth;
+            target.classList.add('animate-in');
+        }
     },
 
     updateActiveNav(activeBtn) {
         document.querySelectorAll('.nav-pill').forEach(btn => btn.classList.remove('active'));
         activeBtn.classList.add('active');
+    },
+
+    toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('show');
+    },
+
+    closeSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        sidebar.classList.remove('open');
+        overlay.classList.remove('show');
     },
 
     applyTheme() {
@@ -258,12 +309,15 @@ const UI = {
         if (theme === 'system') {
             activeTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         }
-        document.documentElement.setAttribute('data-theme', activeTheme);
+        this.setTheme(activeTheme);
     },
 
-    updateThemeIcon(theme) {
+    setTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
         const icon = document.querySelector('#theme-toggle .icon');
-        icon.textContent = theme === 'dark' ? '☀️' : '🌙';
+        if (icon) {
+            icon.textContent = theme === 'dark' ? '☀️' : '🌙';
+        }
     },
 
     // Modal Helpers
@@ -445,10 +499,18 @@ const UI = {
                 <div class="flex-col gap-sm">
                     ${items.map(exp => {
             const payer = store.getMembers().find(m => m.id === exp.paidBy);
+            const title = exp.title.toLowerCase();
+            let icon = '💸';
+            if (title.includes('food') || title.includes('eat') || title.includes('dinner')) icon = '🍔';
+            if (title.includes('fuel') || title.includes('petrol') || title.includes('gas')) icon = '⛽';
+            if (title.includes('hotel') || title.includes('stay') || title.includes('room')) icon = '🏨';
+            if (title.includes('ticket') || title.includes('flight') || title.includes('train')) icon = '🎫';
+            if (title.includes('drink') || title.includes('beer') || title.includes('bar')) icon = '🍻';
+
             return `
                             <div class="card glass animate-in p-md flex-between" style="cursor: pointer;" onclick="UI.showExpenseDetailModal('${exp.id}')">
                                 <div class="flex-center gap-md">
-                                    <div class="avatar-sm flex-center">💸</div>
+                                    <div class="avatar-sm flex-center">${icon}</div>
                                     <div>
                                         <strong class="block text-sm">${exp.title}</strong>
                                         <span class="text-xs text-secondary">Paid by ${payer ? payer.name : 'Unknown'}</span>
@@ -734,6 +796,17 @@ const UI = {
             this.renderMembersManagement();
             this.showToast('Member updated');
         });
+    },
+
+    handleDeleteMember(id) {
+        const member = store.getMembers().find(m => m.id === id);
+        if (!member) return;
+
+        if (confirm(`Are you sure you want to remove ${member.name}? This will not delete their existing expenses but they will no longer be selectable for new ones.`)) {
+            store.deleteMember(id);
+            this.renderMembersManagement();
+            this.showToast(`${member.name} removed`);
+        }
     },
 
     renderTemplatesManagement() {
