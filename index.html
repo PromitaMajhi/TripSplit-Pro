@@ -136,6 +136,10 @@
                                 <div id="member-selection-list" class="member-grid grid-3">
                                     <!-- Populated by JS -->
                                 </div>
+                                <div id="demo-load-container" class="mt-md hidden">
+                                    <button type="button" class="btn-outline w-full text-xs" id="load-demo-btn">📦 Load
+                                        Demo Members</button>
+                                </div>
                             </div>
                             <button type="submit" class="btn-primary w-full py-lg">🚀 Start Trip</button>
                         </form>
@@ -214,6 +218,10 @@
                     <div id="members-list" class="grid-3 gap-xl">
                         <!-- Populated by JS -->
                     </div>
+                    <div id="members-demo-load" class="mt-xl hidden">
+                        <button class="btn-outline w-full py-md" onclick="UI.handleLoadDemoMembers()">📦 Load Default
+                            Member List</button>
+                    </div>
                 </div>
 
                 <!-- Settings View -->
@@ -238,28 +246,46 @@
                                     <option value="EUR">Euro (€)</option>
                                 </select>
                             </div>
-                            <div class="form-group">
+                            <div class="form-group mb-xl">
                                 <label>Timezone</label>
                                 <select id="settings-timezone">
                                     <option value="Asia/Kolkata">Asia/Kolkata</option>
                                     <option value="UTC">UTC</option>
                                 </select>
                             </div>
+                            <div class="pt-lg border-top">
+                                <h4 class="text-sm mb-sm text-secondary">Demo Support</h4>
+                                <button class="btn-outline w-full text-xs py-sm" onclick="UI.handleLoadDemoMembers()">📦
+                                    Load Default Member List</button>
+                            </div>
                         </div>
-                        <div class="whatsapp-templates">
-                            <div class="flex-between mb-lg">
-                                <h3 class="h4">WhatsApp Templates</h3>
-                                <button class="btn-secondary text-xs py-xs px-md" id="add-template-trigger">+
-                                    New</button>
+                        <div class="card glass p-xl">
+                            <h3 class="h4 mb-lg text-danger">Danger Zone</h3>
+                            <p class="text-xs text-secondary mb-md">These actions are permanent and cannot be undone.
+                                Please be careful.</p>
+                            <div class="flex-col gap-sm">
+                                <button class="btn-outline w-full text-xs py-sm"
+                                    style="border-color: var(--danger); color: var(--danger);"
+                                    onclick="UI.handleResetTrip()">🗑️ Delete Current Trip Data</button>
+                                <button class="btn-outline w-full text-xs py-sm" onclick="UI.handleLoadDemoMembers()">📦
+                                    Reset to Demo Members</button>
                             </div>
-                            <div id="templates-list">
-                                <!-- Populated by JS -->
-                            </div>
+                        </div>
+                    </div>
+                    <div class="whatsapp-templates">
+                        <div class="flex-between mb-lg">
+                            <h3 class="h4">WhatsApp Templates</h3>
+                            <button class="btn-secondary text-xs py-xs px-md" id="add-template-trigger">+
+                                New</button>
+                        </div>
+                        <div id="templates-list">
+                            <!-- Populated by JS -->
                         </div>
                     </div>
                 </div>
             </div>
-        </main>
+    </div>
+    </main>
     </div>
 
     <!-- Modals & Toasts -->

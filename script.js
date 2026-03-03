@@ -37,11 +37,28 @@ class Store {
         if (!saved) return defaultData;
 
         const data = JSON.parse(saved);
-        // If the user has data but no members, inject defaults
-        if (data.members.length === 0) {
+        // If the user has data but absolutely NO members, inject the default list
+        if (!data.members || data.members.length === 0) {
             data.members = defaultData.members;
         }
         return data;
+    }
+
+    resetToDefaults() {
+        const defaultData = {
+            members: [
+                { id: 'm1', name: 'Shuvo', whatsapp: '8801765245872', photo: '' },
+                { id: 'm2', name: 'Promita', whatsapp: '8801912790430', photo: '' },
+                { id: 'm3', name: 'Monami', whatsapp: '917044528716', photo: '' },
+                { id: 'm4', name: 'Setu', whatsapp: '919933493538', photo: '' },
+                { id: 'm5', name: 'Arpita', whatsapp: '8801923701861', photo: '' },
+                { id: 'm6', name: 'Dipanjon', whatsapp: '918016370668', photo: '' },
+                { id: 'm7', name: 'Srijan', whatsapp: '8801643116647', photo: '' }
+            ],
+            // other defaults are optional here
+        };
+        this.data.members = defaultData.members;
+        this.save();
     }
 
     save() {
@@ -177,6 +194,16 @@ const UI = {
         document.getElementById('sidebar-toggle').addEventListener('click', () => this.toggleSidebar());
         document.getElementById('sidebar-overlay').addEventListener('click', () => this.closeSidebar());
 
+        // Demo Member Loader
+        const loadDemoBtn = document.getElementById('load-demo-btn');
+        if (loadDemoBtn) {
+            loadDemoBtn.addEventListener('click', () => {
+                store.resetToDefaults();
+                this.renderMemberSelection();
+                this.showToast('Demo members loaded!');
+            });
+        }
+
         // Theme Toggle
         document.getElementById('theme-toggle').addEventListener('click', () => {
             const current = document.documentElement.getAttribute('data-theme');
@@ -240,6 +267,11 @@ const UI = {
         document.getElementById('settings-currency').addEventListener('change', (e) => {
             store.updateSettings({ currency: e.target.value });
             this.renderDashboard();
+        });
+
+        document.getElementById('settings-timezone').addEventListener('change', (e) => {
+            store.updateSettings({ timezone: e.target.value });
+            this.showToast('Timezone updated');
         });
 
         document.getElementById('add-template-trigger').addEventListener('click', () => this.showTemplateModal());
@@ -334,6 +366,7 @@ const UI = {
     // View Renders & Actions
     renderMemberSelection() {
         const container = document.getElementById('member-selection-list');
+        const demoContainer = document.getElementById('demo-load-container');
         const members = store.getMembers();
 
         if (members.length === 0) {
@@ -342,9 +375,11 @@ const UI = {
                     <p class="text-secondary text-sm">No members added yet. Create some to start splitting!</p>
                 </div>
             `;
+            if (demoContainer) demoContainer.classList.remove('hidden');
             return;
         }
 
+        if (demoContainer) demoContainer.classList.add('hidden');
         container.innerHTML = members.map(m => `
             <div class="member-chip">
                 <input type="checkbox" id="m-${m.id}" value="${m.id}" name="members" checked>
@@ -724,13 +759,16 @@ const UI = {
 
     renderMembersManagement() {
         const container = document.getElementById('members-list');
+        const demoContainer = document.getElementById('members-demo-load');
         const members = store.getMembers();
 
         if (members.length === 0) {
             container.innerHTML = '<div class="card glass text-center py-xl w-full">No members found.</div>';
+            if (demoContainer) demoContainer.classList.remove('hidden');
             return;
         }
 
+        if (demoContainer) demoContainer.classList.add('hidden');
         container.innerHTML = members.map(m => `
             <div class="card glass animate-in flex-between p-md" style="border-radius: var(--radius-md)">
                 <div class="flex-center gap-md" style="cursor: pointer;" onclick="UI.showEditMemberModal('${m.id}')">
@@ -746,6 +784,15 @@ const UI = {
                 </div>
             </div>
         `).join('');
+    },
+
+    handleLoadDemoMembers() {
+        if (confirm('Load the default demo member list? This will add 7 members to your list.')) {
+            store.resetToDefaults();
+            this.renderMemberSelection();
+            this.renderMembersManagement();
+            this.showToast('Default members loaded!');
+        }
     },
 
     showEditMemberModal(id) {
@@ -874,25 +921,11 @@ const UI = {
     },
 
     renderSettings() {
-        const { theme, currency, timezone } = store.data.settings;
-        document.getElementById('settings-theme').value = theme;
-        document.getElementById('settings-currency').value = currency;
-        document.getElementById('settings-timezone').value = timezone;
-
-        // Add Reset Button to Settings
-        const settingsCard = document.querySelector('#view-settings .card');
-        if (settingsCard && !document.getElementById('reset-trip-btn')) {
-            const resetDiv = document.createElement('div');
-            resetDiv.className = 'mt-xl pt-lg border-top';
-            resetDiv.innerHTML = `
-                <h4 class="text-sm mb-sm text-danger">Danger Zone</h4>
-                <p class="text-xs text-secondary mb-md">Once you reset the current trip, all expenses will be deleted permanently.</p>
-                <button id="reset-trip-btn" class="btn-outline text-danger border-danger w-full">Delete Current Trip data</button>
-            `;
-            settingsCard.appendChild(resetDiv);
-
-            document.getElementById('reset-trip-btn').addEventListener('click', () => this.handleResetTrip());
-        }
+        const settings = store.data.settings;
+        document.getElementById('settings-theme').value = settings.theme;
+        document.getElementById('settings-currency').value = settings.currency;
+        const tzSelect = document.getElementById('settings-timezone');
+        if (tzSelect) tzSelect.value = settings.timezone || 'Asia/Kolkata';
 
         this.renderTemplatesManagement();
     },
