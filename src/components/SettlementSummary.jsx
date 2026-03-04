@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { Send } from 'lucide-react';
 import { useTrip } from '../context/TripContext';
 
 const SettlementSummary = ({ trip, expenses, currency, onSendWhatsApp }) => {
